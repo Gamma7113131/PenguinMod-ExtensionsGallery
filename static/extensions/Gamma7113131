@@ -1,0 +1,88 @@
+// Name: PenguinLLAMA
+// ID: GLlama
+// Description: Chat with LLaMA via PenguinMod using the Groq API.
+// By: Gamma7113131 <https://scratch.mit.edu/users/Gamma7113131/>
+// License: MIT
+
+(function (Scratch) {
+  "use strict";
+
+  if (!Scratch.extensions.unsandboxed) {
+    throw new Error("PenguinLLAMA extension must be run unsandboxed");
+  }
+
+  const apiUrl = "https://api.groq.com/chat/completions"; // Groq API URL
+  const apiKey = "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"; // Replace with your actual Groq API key
+  let lastResponse = "";
+
+  /**
+   * Fetch chat completion from the Groq API using the LLaMA model.
+   * @param {string} userMessage - The user's message to send to LLaMA.
+   * @returns {Promise<string>} A promise that resolves to the chat response.
+   */
+  const getGroqChatCompletion = async (userMessage) => {
+    try {
+      const response = await fetch(apiUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          messages: [
+            {
+              role: "user",
+              content: userMessage,
+            },
+          ],
+          model: "llama3-8b-8192",
+        }),
+      });
+
+      const data = await response.json();
+      lastResponse = data.choices[0]?.message?.content || "No response received.";
+      return lastResponse;
+    } catch (error) {
+      console.error("Error communicating with Groq API:", error);
+      return "An error occurred.";
+    }
+  };
+
+  class PenguinLLAMA {
+    getInfo() {
+      return {
+        id: "GLlama",
+        name: "PenguinLLAMA",
+        color1: "#6a5acd",
+        blocks: [
+          {
+            opcode: "chatWithLLaMA",
+            blockType: Scratch.BlockType.REPORTER,
+            text: "Chat with LLaMA: [message]",
+            arguments: {
+              message: {
+                type: Scratch.ArgumentType.STRING,
+                defaultValue: "Hello, LLaMA!",
+              },
+            },
+          },
+          {
+            opcode: "getLastResponse",
+            blockType: Scratch.BlockType.REPORTER,
+            text: "Last LLaMA response",
+          },
+        ],
+      };
+    }
+
+    chatWithLLaMA(args) {
+      return getGroqChatCompletion(args.message).then((response) => response);
+    }
+
+    getLastResponse() {
+      return lastResponse;
+    }
+  }
+
+  Scratch.extensions.register(new PenguinLLAMA());
+})(Scratch);
